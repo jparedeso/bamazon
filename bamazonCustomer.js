@@ -3,7 +3,6 @@ var inquirer = require("inquirer");
 var app = express();
 var PORT = process.env.PORT || 8080;
 var mysql = require("mysql");
-var choices = [];
 var itemId = "";
 var itemQuantity= "";
 
@@ -20,58 +19,64 @@ connection.connect(function(err) {
         return;
     }
     console.log("connected as id " + connection.threadId);
-    itemChoices();
     start();
 });
 
-function itemChoices() {
+function start() {
     connection.query(
         "SELECT * FROM products", function(err, results) {
             if (err) throw err;
-            for (var i = 0; i < results.length; i++) {
-                choices.push(results[i].item_id);
-            }
+            inquirer.prompt([
+                {
+                    name: "itemId",
+                    type: "list",
+                    message: "What product would you like to buy?",
+                    choices: function() {
+                        var choices = [];
+                        for (var i = 0; i < results.length; i++) {
+                            choices.push(results[i].item_id);
+                        }
+                        return choices;
+                    }
+                },
+                {
+                    name: "itemQuantity",
+                    type: "input",
+                    message: "What quantity?"
+                }
+            ]).then(function(answer) {
+                itemId = answer.itemId;
+                itemQuantity = answer.itemQuantity;
+                getItems(itemId, itemQuantity);
+            });
         });
 }
-
-function start() {
-    inquirer.prompt([
-        {
-            name: "itemId",
-            type: "list",
-            message: "What product would you like to buy?",
-            choices: choices
-        },
-        {
-            name: "itemQuantity",
-            type: "input",
-            message: "What quantity?"
-        }
-    ]).then(function(answer) {
-        itemId = answer.itemId;
-        itemQuantity = answer.itemQuantity;
-        getItems(itemId, itemQuantity);
-    });
-}
-function getItems(item, quantity) {
+function getItems(item, Quantity) {
     connection.query(
         "SELECT stock_quantity FROM products WHERE item_id = " + item, function(err, results) {
             if (err) throw err;
-            if (quantity > results[0].stock_quantity) {
+            console.log(results[0]);
+            if (Quantity > results[0].stock_quantity) {
                 console.log("There is not enough stock.");
                 getItems(itemId, itemQuantity);
             } else {
+                console.log("Test");
                 placeOrder();
+                updateStock();
             }
         });
 }
-
 function placeOrder() {
     connection.query(
-        "UPDATE products SET stock_quantity -" + itemQuantity + " WHERE item_id = " +itemId, function(err, results) {
+        "SELECT price, product_name FROM products WHERE item_id = " +itemId, function(err, results) {
+            var price = parseFloat(parseFloat(itemQuantity) * parseFloat(results[0].price)).toFixed(2);
+            console.log("You are buying " + results[0].product_name + " x " + itemQuantity + " for $" + price + ".");
+        });
+}
+function updateStock() {
+    connection.query(
+        "UPDATE products SET stock_quantity = stock_quantity - " + itemQuantity + " WHERE item_id = " + itemId, function(err, results) {
            if (err) throw err;
-           var price = parseFloat(parseFloat(itemQuantity) * parseFloat(results[0].price)).toFixed(2);
-           console.log("You are buying " + itemId + "x" + itemQuantity + " for $" + price + ".");
            itemId = "";
            itemQuantity = "";
            inquirer.prompt(
