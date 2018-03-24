@@ -55,12 +55,10 @@ function getItems(item, Quantity) {
     connection.query(
         "SELECT stock_quantity FROM products WHERE item_id = " + item, function(err, results) {
             if (err) throw err;
-            console.log(results[0]);
             if (Quantity > results[0].stock_quantity) {
                 console.log("There is not enough stock.");
-                getItems(itemId, itemQuantity);
+                start();
             } else {
-                console.log("Test");
                 placeOrder();
                 updateStock();
             }
