@@ -34,7 +34,7 @@ function start() {
                     choices: function() {
                         var choices = [];
                         for (var i = 0; i < res.length; i++) {
-                            choices.push(res[i].item_id);
+                            choices.push(res[i].product_name);
                         }
                         return choices;
                     }
@@ -53,7 +53,7 @@ function start() {
 }
 function getItems(item, Quantity) {
     connection.query(
-        "SELECT stock_quantity FROM products WHERE item_id = ?", item, function(err, res) {
+        "SELECT stock_quantity FROM products WHERE product_name = ?", item, function(err, res) {
             if (err) throw err;
             if (Quantity > res[0].stock_quantity) {
                 console.log("There is not enough stock.");
@@ -66,14 +66,14 @@ function getItems(item, Quantity) {
 }
 function placeOrder() {
     connection.query(
-        "SELECT price, product_name FROM products WHERE item_id = " +itemId, function(err, res) {
+        "SELECT price, product_name FROM products WHERE product_name = ?", itemId, function(err, res) {
             var price = parseFloat(parseFloat(itemQuantity) * parseFloat(res[0].price)).toFixed(2);
             console.log("You are buying " + res[0].product_name + " x " + itemQuantity + " for $" + price + ".");
         });
 }
 function updateStock() {
     connection.query(
-        "UPDATE products SET stock_quantity = stock_quantity - " + itemQuantity + " WHERE item_id = " + itemId, function(err, res) {
+        "UPDATE products SET stock_quantity = stock_quantity - " + itemQuantity + " WHERE product_name = ?", itemId, function(err, res) {
            if (err) throw err;
            itemId = "";
            itemQuantity = "";
