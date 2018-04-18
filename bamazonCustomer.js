@@ -24,7 +24,7 @@ connection.connect(function(err) {
 
 function start() {
     connection.query(
-        "SELECT * FROM products", function(err, results) {
+        "SELECT * FROM products", function(err, res) {
             if (err) throw err;
             inquirer.prompt([
                 {
@@ -33,8 +33,8 @@ function start() {
                     message: "What product would you like to buy?",
                     choices: function() {
                         var choices = [];
-                        for (var i = 0; i < results.length; i++) {
-                            choices.push(results[i].item_id);
+                        for (var i = 0; i < res.length; i++) {
+                            choices.push(res[i].item_id);
                         }
                         return choices;
                     }
@@ -53,9 +53,9 @@ function start() {
 }
 function getItems(item, Quantity) {
     connection.query(
-        "SELECT stock_quantity FROM products WHERE item_id = " + item, function(err, results) {
+        "SELECT stock_quantity FROM products WHERE item_id = ?", item, function(err, res) {
             if (err) throw err;
-            if (Quantity > results[0].stock_quantity) {
+            if (Quantity > res[0].stock_quantity) {
                 console.log("There is not enough stock.");
                 start();
             } else {
@@ -66,14 +66,14 @@ function getItems(item, Quantity) {
 }
 function placeOrder() {
     connection.query(
-        "SELECT price, product_name FROM products WHERE item_id = " +itemId, function(err, results) {
-            var price = parseFloat(parseFloat(itemQuantity) * parseFloat(results[0].price)).toFixed(2);
-            console.log("You are buying " + results[0].product_name + " x " + itemQuantity + " for $" + price + ".");
+        "SELECT price, product_name FROM products WHERE item_id = " +itemId, function(err, res) {
+            var price = parseFloat(parseFloat(itemQuantity) * parseFloat(res[0].price)).toFixed(2);
+            console.log("You are buying " + res[0].product_name + " x " + itemQuantity + " for $" + price + ".");
         });
 }
 function updateStock() {
     connection.query(
-        "UPDATE products SET stock_quantity = stock_quantity - " + itemQuantity + " WHERE item_id = " + itemId, function(err, results) {
+        "UPDATE products SET stock_quantity = stock_quantity - " + itemQuantity + " WHERE item_id = " + itemId, function(err, res) {
            if (err) throw err;
            itemId = "";
            itemQuantity = "";
@@ -92,6 +92,7 @@ function updateStock() {
                            break;
                        case "No":
                            connection.end();
+                           process.exit(-1);
                            break;
                    }
            });
