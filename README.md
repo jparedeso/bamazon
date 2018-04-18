@@ -1,3 +1,3 @@
 Node Demo:
 
-![GIF DEMO](/gif/bamazon1.gif)
+![GIF DEMO](/gif/bamazon.gif)
